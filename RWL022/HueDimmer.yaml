@@ -1,0 +1,86 @@
+blueprint:
+  name: Philips Hue Dimmer (Multiple)
+  description:
+    "Control lights with a Philips Hue Dimmer Switch (v2).\n\n Blueprint\
+    \ Version: 1"
+  domain: automation
+  input:
+    remotes:
+      name: Philips Hue Dimmer Switch
+      description: Pick a RWL022 Dimmer Switch
+      selector:
+        target:
+          device:
+            - manufacturer: 'Signify Netherlands B.V.'
+          entity:
+            - integration: zha
+              domain: sensor
+              device_class: battery
+    power_light:
+      name: The main light entity to control.
+      description: The light entity which the top button will control. (Power button).
+      selector:
+        entity:
+          domain: light
+    brightness_steps:
+      name: Percentage to increase or decrease brightness.
+      description: The percentage to increase or decrease brightness when the button is pressed or hold.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 25
+          unit_of_measurement: "%"
+  source_url: https://github.com/segadora/home-assistant-blueprints/blob/master/RWL022/HueDimmer.yaml
+mode: restart
+max_exceeded: silent
+variables:
+  remotes: !input "remotes"
+  power_light: !input "power_light"
+  brightness_steps: !input "brightness_steps"
+trigger:
+  - platform: event
+    event_type: zha_event
+condition:
+  - condition: template
+    value_template: "{{ trigger.event.data.device_id in remotes.device_id }}"
+action:
+  - variables:
+      command: "{{ trigger.event.data.command }}"
+      power_light_on: "{{ states(power_light) == 'on' }}"
+  - choose:
+      - conditions: "{{ command == 'on_press' }}"
+        sequence:
+          service: light.turn_on
+          data:
+            entity_id: !input "power_light"
+            transition: 0.5
+            brightness_pct: 100
+      - conditions: "{{ command == 'off_press' }}"
+        sequence:
+          service: light.turn_off
+          data:
+            entity_id: !input "power_light"
+            transition: 0.5
+      - conditions:
+          - condition: or
+            conditions:
+              - "{{ command == 'up_press' }}"
+              - "{{ command == 'up_hold' }}"
+        sequence:
+          service: light.turn_on
+          data:
+            entity_id: !input "power_light"
+            transition: 0.5
+            brightness_step_pct: "{{ brightness_steps }}"
+      - conditions:
+          - condition: or
+            conditions:
+              - "{{ command == 'down_press' }}"
+              - "{{ command == 'down_hold' }}"
+        sequence:
+          service: light.turn_on
+          data:
+            entity_id: !input "power_light"
+            transition: 0.5
+            brightness_step_pct: "{{ brightness_steps*-1 }}"
