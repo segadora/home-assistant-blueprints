@@ -7,10 +7,10 @@
 
 This blueprint allows you to use multiple remotes for a single light.
 
-Power button = Turn light on with 100% brightness
+Power button = Turn light on with 100% brightness or turn light off
 Up = Turn the light on with low brightness or increase brightness
 Down = Turn brightness down
-Hue button = Turn light off
+Hue button = Turn lamp on with 10% brightness
 
 
 Based off [brodock/HueDimmer_RWL022.yaml](https://gist.github.com/brodock/0c85f4882b885d4d5499cd88d155c38c#file-huedimmer_rwl022-yaml)
