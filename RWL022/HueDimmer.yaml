@@ -2,7 +2,7 @@ blueprint:
   name: Philips Hue Dimmer (Multiple)
   description:
     "Control lights with a Philips Hue Dimmer Switch (v2).\n\n Blueprint\
-    \ Version: 2"
+    \ Version: 3"
   domain: automation
   input:
     remotes:
@@ -47,7 +47,6 @@ condition:
 action:
   - variables:
       command: "{{ trigger.event.data.command }}"
-      power_light_on: "{{ states(power_light) == 'on' }}"
   - choose:
       - conditions: "{{ command == 'on_press' }}"
         sequence:
