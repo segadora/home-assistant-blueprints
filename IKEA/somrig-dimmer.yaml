@@ -1,0 +1,101 @@
+blueprint:
+  name: SOMRIG Dimmer
+  description: "Control lights with a SOMRIG Shortcut button.\n\n Blueprint
+    Version: 1"
+  domain: automation
+  input:
+    remotes:
+      name: Button
+      description: IKEA SOMRIG shortcut button
+      selector:
+        target:
+          device:
+          - manufacturer: IKEA of Sweden
+          entity:
+          - integration: zha
+            domain:
+            - sensor
+            device_class:
+            - battery
+    power_light:
+      name: The main light entity to control.
+      description: The light entity which the top button will control. (Power button).
+      selector:
+        entity:
+          domain:
+          - light
+          multiple: false
+    brightness_steps:
+      name: Percentage to increase or decrease brightness.
+      description: The percentage to increase or decrease brightness when the button
+        is pressed or hold.
+      default: 10
+      selector:
+        number:
+          min: 1.0
+          max: 25.0
+          unit_of_measurement: '%'
+          step: 1.0
+          mode: slider
+  source_url: https://github.com/segadora/home-assistant-blueprints/blob/master/RWL022/HueDimmer.yaml
+mode: restart
+max_exceeded: silent
+variables:
+  remotes: !input remotes
+  power_light: !input power_light
+  brightness_steps: !input brightness_steps
+trigger:
+- platform: event
+  event_type: zha_event
+condition:
+- condition: template
+  value_template: '{{ trigger.event.data.device_id in remotes.device_id }}'
+action:
+- variables:
+    command: '{{ trigger.event.data.command }}'
+    endpoint_id: '{{ trigger.event.data.endpoint_id }}'
+- choose:
+  - conditions:
+      - condition: and
+        conditions:
+          - '{{ command == ''initial_press'' }}'
+          - '{{ endpoint_id == 1 }}'
+    sequence:
+      service: light.turn_on
+      data:
+        entity_id: !input power_light
+        transition: 0.5
+        brightness_step_pct: '{{ brightness_steps }}'
+  - conditions:
+      - condition: and
+        conditions:
+          - '{{ command == ''initial_press'' }}'
+          - '{{ endpoint_id == 2 }}'
+    sequence:
+      service: light.turn_on
+      data:
+        entity_id: !input power_light
+        transition: 0.5
+        brightness_step_pct: '{{ brightness_steps*-1 }}'
+  - conditions:
+      - condition: and
+        conditions:
+          - '{{ command == ''long_press'' }}'
+          - '{{ endpoint_id == 1 }}'
+    sequence:
+      service: light.turn_on
+      data:
+        entity_id: !input power_light
+        transition: 0.5
+        brightness_pct: 100
+  - conditions:
+      - condition: and
+        conditions:
+          - '{{ command == ''long_press'' }}'
+          - '{{ endpoint_id == 2 }}'
+    sequence:
+      service: light.turn_on
+      data:
+        entity_id: !input power_light
+        transition: 0.5
+        brightness_pct: '{{ brightness_steps }}'
